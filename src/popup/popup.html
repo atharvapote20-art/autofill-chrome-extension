@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Secure Form Vault</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <div class="sfv-app">
+      <div class="sfv-bg" aria-hidden="true"></div>
+
+      <header class="sfv-top">
+        <div class="sfv-brand">
+          <span class="sfv-brand__mark" aria-hidden="true">
+            <img class="sfv-brand__img" src="../../icons/logo.svg" width="36" height="36" alt="" />
+          </span>
+          <div class="sfv-brand__text">
+            <span class="sfv-brand__name">Secure Form Vault</span>
+            <span class="sfv-brand__tag">Encrypted · On-device</span>
+          </div>
+        </div>
+      </header>
+
+      <p id="banner" class="sfv-toast sfv-toast--err" role="alert" hidden></p>
+
+      <section id="gate" class="sfv-card">
+        <h2 class="sfv-card__title" id="gateTitle">Unlock vault</h2>
+        <p class="sfv-card__lead">Your data never leaves this browser.</p>
+        <p id="passwordRulesHint" class="sfv-hint" hidden>
+          Minimum 8 characters (10–12+ recommended). Include uppercase, lowercase, a number, and a special
+          character (@ # $ % &amp; * ! etc.). Avoid common, sequential, or repeated patterns. You must match
+          both fields below.
+        </p>
+
+        <div class="sfv-field">
+          <label class="sfv-label" for="pass">Master password</label>
+          <div class="sfv-inputwrap">
+            <span class="sfv-input__icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="11" width="14" height="10" rx="2" />
+                <path d="M7 11V8a5 5 0 0 1 10 0v3" />
+              </svg>
+            </span>
+            <input id="pass" class="sfv-input sfv-input--pad" type="password" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="sfv-field" id="pass2wrap" hidden>
+          <label class="sfv-label" for="pass2">Confirm password</label>
+          <div class="sfv-inputwrap">
+            <span class="sfv-input__icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4" />
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+              </svg>
+            </span>
+            <input id="pass2" class="sfv-input sfv-input--pad" type="password" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="sfv-actions">
+          <button id="primary" class="sfv-btn sfv-btn--primary" type="button">
+            <span class="sfv-btn__icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 7l2 2 4-4M4 12h9M4 18h16" />
+              </svg>
+            </span>
+            <span id="primaryLabel">Unlock</span>
+          </button>
+          <button id="secondary" class="sfv-btn sfv-btn--ghost" type="button" hidden>Back</button>
+        </div>
+      </section>
+
+      <section id="workspace" class="sfv-card" hidden>
+        <h2 class="sfv-card__title">Quick fill</h2>
+        <p class="sfv-card__lead">Uses the active tab (http or https only).</p>
+
+        <div class="sfv-field">
+          <label class="sfv-label" for="profile">Profile</label>
+          <div class="sfv-inputwrap">
+            <span class="sfv-input__icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M5 20v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1" />
+              </svg>
+            </span>
+            <select id="profile" class="sfv-input sfv-input--pad sfv-select"></select>
+          </div>
+        </div>
+
+        <div class="sfv-actions sfv-actions--split">
+          <button id="fill" class="sfv-btn sfv-btn--primary" type="button">
+            <span class="sfv-btn__icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v18M8 8h11M8 16h8" />
+              </svg>
+            </span>
+            Fill this tab
+          </button>
+          <button id="lock" class="sfv-btn sfv-btn--outline" type="button" title="Lock vault">
+            <span class="sfv-btn__icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="11" width="14" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+            </span>
+            Lock
+          </button>
+        </div>
+        <p id="fillnote" class="sfv-hint"></p>
+      </section>
+
+      <footer class="sfv-foot">
+        <a id="openopts" class="sfv-link" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+          </svg>
+          Settings &amp; profiles
+        </a>
+      </footer>
+    </div>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

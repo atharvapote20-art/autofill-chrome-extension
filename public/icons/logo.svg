@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="sfv-a" x1="18" y1="14" x2="110" y2="114" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5E9"/>
+      <stop offset="0.5" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#sfv-a)"/>
+  <path
+    fill="#F8FAFC"
+    fill-opacity="0.92"
+    d="M64 30c-12 0-22 8-22 18v8H34c-3 0-6 3-6 6v36c0 3 3 6 6 6h60c3 0 6-3 6-6V62c0-3-3-6-6-6H86v-8c0-10-10-18-22-18Zm0 12c6 0 10 4 10 8v8H54v-8c0-4 4-8 10-8Z"
+  />
+  <path stroke="#F8FAFC" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round" d="M44 78h18M44 92h36"/>
+  <circle cx="88" cy="72" r="7" fill="#22D3EE"/>
+</svg>

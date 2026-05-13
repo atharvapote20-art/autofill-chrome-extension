@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Secure Form Vault — Settings</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <div class="sfv-shell">
+      <div class="sfv-shell__bg" aria-hidden="true"></div>
+
+      <aside class="sfv-rail">
+        <div class="sfv-rail__brand">
+          <img class="sfv-rail__logo" src="../../icons/logo.svg" width="40" height="40" alt="" />
+          <div>
+            <div class="sfv-rail__title">Secure Form Vault</div>
+            <div class="sfv-rail__sub">Settings</div>
+          </div>
+        </div>
+
+        <nav class="sfv-rail__nav" id="railNav" hidden>
+          <button type="button" class="sfv-nav__item tab active" data-tab="prefs">
+            <span class="sfv-nav__ico" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2" />
+              </svg>
+            </span>
+            Preferences
+          </button>
+          <button type="button" class="sfv-nav__item tab" data-tab="profiles">
+            <span class="sfv-nav__ico" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M5 20v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1" />
+              </svg>
+            </span>
+            Profiles
+          </button>
+          <button type="button" class="sfv-nav__item tab" data-tab="snippets">
+            <span class="sfv-nav__ico" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5h10M9 12h10M9 19h6" />
+                <path d="M5 5h.01M5 12h.01M5 19h.01" stroke-linecap="round" />
+              </svg>
+            </span>
+            Snippets
+          </button>
+          <button type="button" class="sfv-nav__item tab" data-tab="backup">
+            <span class="sfv-nav__ico" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v12M8 11l4 4 4-4" />
+                <rect x="5" y="19" width="14" height="2" rx="1" />
+              </svg>
+            </span>
+            Backup
+          </button>
+        </nav>
+
+        <div class="sfv-rail__foot">
+          <span class="sfv-pill">AES-GCM · PBKDF2</span>
+        </div>
+      </aside>
+
+      <main class="sfv-main">
+        <section id="unlockPanel" class="sfv-panel">
+          <div class="sfv-panel__head">
+            <h2 class="sfv-panel__title" id="unlockHeading">Unlock vault</h2>
+            <p class="sfv-panel__lead">Manage profiles, snippets, and preferences.</p>
+          </div>
+          <div class="sfv-formrow">
+            <label class="sfv-olabel" for="vaultpass">Master password</label>
+            <div class="sfv-inputrow">
+              <input id="vaultpass" class="sfv-oinput" type="password" autocomplete="off" />
+              <button id="vaultunlock" type="button" class="sfv-obtn sfv-obtn--primary">Unlock</button>
+            </div>
+          </div>
+          <p id="unlockErr" class="sfv-oerr" role="alert" hidden></p>
+        </section>
+
+        <div id="editor" class="sfv-editor" hidden>
+          <header class="sfv-editor__head">
+            <h1 class="sfv-editor__title">Dashboard</h1>
+            <p class="sfv-editor__lead">Everything is encrypted on this device before it touches the disk.</p>
+          </header>
+
+          <section id="tab-prefs" class="sfv-panel tabpanel">
+            <h2 class="sfv-panel__title">Preferences</h2>
+            <p class="sfv-panel__lead">Tune how filling behaves on websites.</p>
+            <label class="sfv-check">
+              <input id="prefHighlight" type="checkbox" />
+              <span>Highlight fields after fill</span>
+            </label>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="prefTimeout">Session timeout (minutes)</label>
+              <input id="prefTimeout" class="sfv-oinput sfv-oinput--narrow" type="number" min="1" max="1440" />
+            </div>
+            <label class="sfv-check">
+              <input id="prefSkipHidden" type="checkbox" />
+              <span>Skip visually hidden fields</span>
+            </label>
+            <label class="sfv-check">
+              <input id="prefLearn" type="checkbox" />
+              <span>Learn from submitted forms (saves recognized fields into the active profile when you submit a form; vault must be unlocked)</span>
+            </label>
+            <label class="sfv-check">
+              <input id="prefFieldAssist" type="checkbox" />
+              <span>Show saved values when you focus a matching field (vault unlocked)</span>
+            </label>
+            <label class="sfv-check">
+              <input id="prefPromptSave" type="checkbox" />
+              <span>Offer to save edits into your active profile when you leave a field</span>
+            </label>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="prefSmartFill">Smart fill (LLM)</label>
+              <select id="prefSmartFill" class="sfv-oinput">
+                <option value="none">Off — keyword matching only</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="groq">Groq (OpenAI-compatible, fast)</option>
+              </select>
+            </div>
+            <div class="sfv-formrow" id="geminiKeyRow">
+              <label class="sfv-olabel" for="prefGeminiKey">Gemini API key</label>
+              <input
+                id="prefGeminiKey"
+                class="sfv-oinput"
+                type="password"
+                autocomplete="off"
+                placeholder="From Google AI Studio"
+              />
+            </div>
+            <div class="sfv-formrow" id="groqKeyRow" hidden>
+              <label class="sfv-olabel" for="prefGroqKey">Groq API key</label>
+              <input
+                id="prefGroqKey"
+                class="sfv-oinput"
+                type="password"
+                autocomplete="off"
+                placeholder="From console.groq.com/keys"
+              />
+            </div>
+            <div class="sfv-formrow" id="groqModelRow" hidden>
+              <label class="sfv-olabel" for="prefGroqModel">Groq model id</label>
+              <input
+                id="prefGroqModel"
+                class="sfv-oinput"
+                type="text"
+                spellcheck="false"
+                placeholder="llama-3.3-70b-versatile"
+              />
+            </div>
+            <p class="sfv-muted">
+              LLM sees <strong>field labels only</strong> (not your vault passphrase). Keys live in browser storage, not
+              inside the encrypted vault.
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">Gemini keys</a> ·
+              <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer">Groq keys</a>.
+            </p>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="prefMax">Max fields per fill</label>
+              <input id="prefMax" class="sfv-oinput sfv-oinput--narrow" type="number" min="1" max="200" />
+            </div>
+            <button id="savePrefs" type="button" class="sfv-obtn sfv-obtn--primary">Save preferences</button>
+            <p id="prefMsg" class="sfv-ook" hidden></p>
+          </section>
+
+          <section id="tab-profiles" class="sfv-panel tabpanel" hidden>
+            <h2 class="sfv-panel__title">Profiles</h2>
+            <p class="sfv-panel__lead">Each profile is a bundle of fields used for matching on pages.</p>
+            <div class="sfv-formrow sfv-formrow--split">
+              <div>
+                <label class="sfv-olabel" for="profilePick">Active profile</label>
+                <select id="profilePick" class="sfv-oinput"></select>
+              </div>
+              <button id="addProfile" type="button" class="sfv-obtn sfv-obtn--ghost">Add profile</button>
+            </div>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="profileName">Display name</label>
+              <div class="sfv-inputrow">
+                <input id="profileName" class="sfv-oinput" type="text" />
+                <label class="sfv-check sfv-check--inline">
+                  <input id="profileDefault" type="checkbox" />
+                  <span>Default</span>
+                </label>
+              </div>
+            </div>
+            <div id="fieldGrid" class="sfv-fields"></div>
+            <div class="sfv-formrow sfv-formrow--split">
+              <input id="customKey" class="sfv-oinput" type="text" placeholder="Custom field key" />
+              <input id="customVal" class="sfv-oinput" type="text" placeholder="Value" />
+              <button id="addCustom" type="button" class="sfv-obtn sfv-obtn--ghost">Add</button>
+            </div>
+            <div class="sfv-btnrow">
+              <button id="saveProfile" type="button" class="sfv-obtn sfv-obtn--primary">Save profile</button>
+              <button id="delProfile" type="button" class="sfv-obtn sfv-obtn--danger">Delete profile</button>
+            </div>
+            <p id="profMsg" class="sfv-ook" hidden></p>
+          </section>
+
+          <section id="tab-snippets" class="sfv-panel tabpanel" hidden>
+            <h2 class="sfv-panel__title">Snippets</h2>
+            <p class="sfv-panel__lead">Long text blocks (bios, messages) map to larger fields on pages.</p>
+            <ul id="snippetList" class="sfv-snips"></ul>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="snipTitle">Title</label>
+              <input id="snipTitle" class="sfv-oinput" type="text" placeholder="e.g. Support message" />
+            </div>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="snipBody">Body</label>
+              <textarea id="snipBody" class="sfv-oarea" rows="6" placeholder="Paste or write reusable text"></textarea>
+            </div>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="snipTags">Tags</label>
+              <input id="snipTags" class="sfv-oinput" type="text" placeholder="Comma-separated" />
+            </div>
+            <div class="sfv-btnrow">
+              <button id="saveSnippet" type="button" class="sfv-obtn sfv-obtn--primary">Save snippet</button>
+              <button id="newSnippet" type="button" class="sfv-obtn sfv-obtn--ghost">New snippet</button>
+            </div>
+            <p id="snipMsg" class="sfv-ook" hidden></p>
+          </section>
+
+          <section id="tab-backup" class="sfv-panel tabpanel" hidden>
+            <h2 class="sfv-panel__title">Backup &amp; restore</h2>
+            <p class="sfv-panel__lead">Exports are ciphertext JSON — keep files offline and private.</p>
+            <button id="exportBtn" type="button" class="sfv-obtn sfv-obtn--primary">Download encrypted vault</button>
+            <hr class="sfv-hr" />
+            <p class="sfv-muted">Import replaces the vault on this device. Use the passphrase that decrypts the file.</p>
+            <textarea id="importArea" class="sfv-oarea" rows="8" placeholder="Paste exported JSON"></textarea>
+            <div class="sfv-formrow">
+              <label class="sfv-olabel" for="importPass">Import passphrase</label>
+              <input id="importPass" class="sfv-oinput" type="password" placeholder="Passphrase for this backup" />
+            </div>
+            <button id="importBtn" type="button" class="sfv-obtn sfv-obtn--danger">Import vault (replaces existing)</button>
+            <p id="backupMsg" class="sfv-ook" hidden></p>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>

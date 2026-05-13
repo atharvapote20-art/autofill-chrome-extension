@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Secure Form Vault",
+  "version": "0.3.0",
+  "description": "Locally encrypted profiles and snippets for filling everyday web forms.",
+  "permissions": ["storage", "activeTab", "alarms", "scripting"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.groq.com/*"
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Secure Form Vault",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
+  },
+  "options_page": "src/options/options.html",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

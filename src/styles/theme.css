@@ -1,0 +1,62 @@
+/* Shared design tokens — Secure Form Vault */
+:root {
+  color-scheme: light dark;
+
+  --sfv-font: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --sfv-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+
+  /* Light */
+  --sfv-bg0: #f0f4fc;
+  --sfv-bg1: #e8eef9;
+  --sfv-surface: rgba(255, 255, 255, 0.82);
+  --sfv-surface-solid: #ffffff;
+  --sfv-text: #0f172a;
+  --sfv-text-muted: #64748b;
+  --sfv-border: rgba(15, 23, 42, 0.1);
+  --sfv-border-strong: rgba(15, 23, 42, 0.16);
+
+  --sfv-accent: #4f46e5;
+  --sfv-accent-hover: #4338ca;
+  --sfv-accent-soft: rgba(79, 70, 229, 0.12);
+  --sfv-teal: #0d9488;
+  --sfv-danger: #dc2626;
+  --sfv-danger-soft: rgba(220, 38, 38, 0.1);
+  --sfv-success: #059669;
+  --sfv-success-soft: rgba(5, 150, 105, 0.12);
+
+  --sfv-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 40px rgba(15, 23, 42, 0.08);
+  --sfv-shadow-lg: 0 24px 80px rgba(15, 23, 42, 0.12);
+  --sfv-radius: 14px;
+  --sfv-radius-sm: 10px;
+  --sfv-radius-xs: 8px;
+
+  --sfv-mesh: radial-gradient(120% 80% at 10% 0%, rgba(99, 102, 241, 0.18), transparent 52%),
+    radial-gradient(90% 60% at 100% 10%, rgba(14, 165, 233, 0.16), transparent 50%),
+    radial-gradient(70% 50% at 50% 100%, rgba(124, 58, 237, 0.1), transparent 45%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sfv-bg0: #0b1020;
+    --sfv-bg1: #111827;
+    --sfv-surface: rgba(17, 24, 39, 0.75);
+    --sfv-surface-solid: #151c2e;
+    --sfv-text: #f1f5f9;
+    --sfv-text-muted: #94a3b8;
+    --sfv-border: rgba(148, 163, 184, 0.12);
+    --sfv-border-strong: rgba(148, 163, 184, 0.22);
+    --sfv-accent: #818cf8;
+    --sfv-accent-hover: #a5b4fc;
+    --sfv-accent-soft: rgba(129, 140, 248, 0.15);
+    --sfv-teal: #2dd4bf;
+    --sfv-danger: #f87171;
+    --sfv-danger-soft: rgba(248, 113, 113, 0.12);
+    --sfv-success: #34d399;
+    --sfv-success-soft: rgba(52, 211, 153, 0.12);
+    --sfv-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 16px 48px rgba(0, 0, 0, 0.45);
+    --sfv-shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.55);
+    --sfv-mesh: radial-gradient(120% 80% at 10% 0%, rgba(99, 102, 241, 0.25), transparent 52%),
+      radial-gradient(90% 60% at 100% 10%, rgba(14, 165, 233, 0.2), transparent 50%),
+      radial-gradient(70% 50% at 50% 100%, rgba(124, 58, 237, 0.15), transparent 45%);
+  }
+}
