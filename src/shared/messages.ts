@@ -1,6 +1,7 @@
 /** Wire format between UI surfaces and the service worker. */
 
 export type WorkerRequest =
+  | { kind: "sessionGate" }
   | { kind: "status" }
   | { kind: "unlock"; passphrase: string }
   | { kind: "lock" }
@@ -29,6 +30,7 @@ export type VaultPatch =
   | { op: "removeSnippet"; snippetId: string };
 
 export type WorkerResponse =
+  | { ok: true; unlocked: boolean }
   | { ok: true; status: SessionStatus }
   | { ok: true; settings: ExtensionSettings }
   | { ok: true; fillSummary: FillSummary }

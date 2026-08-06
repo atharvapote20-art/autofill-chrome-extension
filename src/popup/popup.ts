@@ -90,7 +90,7 @@ profile.addEventListener("change", () => {
   void chrome.storage.local.set({ [STORAGE_LAST_PROFILE_ID]: profile.value });
 });
 
-primary.addEventListener("click", async () => {
+async function submitGate(): Promise<void> {
   clearBanner();
   if (mode === "bootstrap") {
     const a = pass.value.normalize("NFKC").trim();
@@ -116,6 +116,39 @@ primary.addEventListener("click", async () => {
   if (!handleAuth(res)) return;
   pass.value = "";
   await refreshShell();
+}
+
+async function fillActiveTab(): Promise<void> {
+  clearBanner();
+  const res = await dispatchToBackground({ kind: "fillActiveTab", profileId: profile.value });
+  if (!res.ok) {
+    showBanner(renderError(res.code, res.detail));
+    return;
+  }
+  if (!("fillSummary" in res)) {
+    showBanner("Unexpected fill response");
+    return;
+  }
+  const { filled, skipped, notes } = res.fillSummary;
+  fillnote.textContent = formatFillSummaryLine(filled, skipped, notes);
+}
+
+primary.addEventListener("click", () => {
+  void submitGate();
+});
+
+for (const el of [pass, pass2]) {
+  el.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    void submitGate();
+  });
+}
+
+profile.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  ev.preventDefault();
+  void fillActiveTab();
 });
 
 secondary.addEventListener("click", () => {
@@ -133,19 +166,8 @@ lockBtn.addEventListener("click", async () => {
   await refreshShell();
 });
 
-fillBtn.addEventListener("click", async () => {
-  clearBanner();
-  const res = await dispatchToBackground({ kind: "fillActiveTab", profileId: profile.value });
-  if (!res.ok) {
-    showBanner(renderError(res.code, res.detail));
-    return;
-  }
-  if (!("fillSummary" in res)) {
-    showBanner("Unexpected fill response");
-    return;
-  }
-  const { filled, skipped, notes } = res.fillSummary;
-  fillnote.textContent = formatFillSummaryLine(filled, skipped, notes);
+fillBtn.addEventListener("click", () => {
+  void fillActiveTab();
 });
 
 function formatFillSummaryLine(filled: number, skipped: number, notes: string[]): string {
@@ -168,7 +190,7 @@ openopts.addEventListener("click", (ev) => {
 });
 
 chrome.runtime.onMessage.addListener((msg: { kind?: string }) => {
-  if (msg?.kind === "sessionLocked") void refreshShell();
+  if (msg?.kind === "sessionLocked" || msg?.kind === "sessionUnlocked") void refreshShell();
 });
 
 function handleAuth(res: WorkerResponse): boolean {

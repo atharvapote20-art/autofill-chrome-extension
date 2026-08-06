@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy — Secure Form Vault</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --text: #0f172a;
+        --muted: #475569;
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --border: #e2e8f0;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --text: #e2e8f0;
+          --muted: #94a3b8;
+          --bg: #0b1220;
+          --card: #111827;
+          --border: #1f2937;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 40px 20px 64px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 28px 20px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.75rem;
+        letter-spacing: -0.03em;
+      }
+      h2 {
+        margin: 28px 0 8px;
+        font-size: 1.1rem;
+      }
+      p,
+      li {
+        color: var(--muted);
+      }
+      .meta {
+        margin: 0 0 24px;
+        font-size: 0.9rem;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+      a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <article class="card">
+        <h1>Privacy Policy</h1>
+        <p class="meta"><strong>Secure Form Vault</strong> · Last updated: August 6, 2026</p>
+
+        <p>
+          Secure Form Vault (“the Extension”) is a Chrome extension that stores form-fill profiles and
+          snippets in an encrypted vault on your device. This policy explains what data is handled and
+          what is not.
+        </p>
+
+        <h2>Data we store on your device</h2>
+        <ul>
+          <li>
+            <strong>Encrypted vault:</strong> profiles, field values, and snippets sealed with AES-GCM
+            using a key derived from your master password (PBKDF2). Ciphertext is stored in Chrome
+            extension storage on your browser profile.
+          </li>
+          <li>
+            <strong>Settings:</strong> preferences such as session timeout, fill behavior, and optional
+            third-party API keys you enter yourself (Gemini / Groq). API keys are stored in local
+            extension storage and are <em>not</em> placed inside the encrypted vault.
+          </li>
+          <li>
+            <strong>Session state:</strong> while unlocked, the Extension may keep session material in
+            <code>chrome.storage.session</code> so the vault can stay unlocked across service-worker
+            restarts until you lock it or quit the browser.
+          </li>
+          <li>
+            <strong>Last-used profile id:</strong> a non-sensitive identifier used to choose which
+            profile to fill with.
+          </li>
+        </ul>
+
+        <h2>What we do not collect</h2>
+        <ul>
+          <li>We do not operate a Secure Form Vault backend that receives your vault contents.</li>
+          <li>We do not sell personal data.</li>
+          <li>Your master password is not uploaded to any server by the Extension.</li>
+          <li>
+            Analytics / advertising SDKs are not bundled with the Extension for the purpose of tracking
+            you across sites.
+          </li>
+        </ul>
+
+        <h2>How filling works on websites</h2>
+        <p>
+          To fill forms, the Extension runs a content script on http(s) pages you visit (as permitted by
+          Chrome). It reads field labels and related page text needed for matching, and writes values
+          from your unlocked vault into form controls when you request a fill. This processing happens
+          in your browser.
+        </p>
+
+        <h2>Optional smart fill (Gemini / Groq)</h2>
+        <p>
+          If you enable Smart fill and provide your own API key, the Extension may send
+          <strong>field labels / matching text only</strong> (not your master password, and not a dump of
+          your entire vault) to Google Gemini or Groq so those services can suggest which profile keys
+          map to which fields. Values are still applied locally. Those providers process data under
+          their own terms and privacy policies. Smart fill is off by default.
+        </p>
+
+        <h2>Permissions (why they exist)</h2>
+        <ul>
+          <li><strong>storage</strong> — save encrypted vault and settings on device.</li>
+          <li><strong>activeTab / scripting</strong> — inject or talk to the page helper when filling.</li>
+          <li><strong>alarms</strong> — enforce session timeout / auto-lock.</li>
+          <li>
+            <strong>Host access to http(s) pages</strong> — detect and fill forms on websites you use.
+          </li>
+          <li>
+            <strong>generativelanguage.googleapis.com / api.groq.com</strong> — only used if you enable
+            the corresponding smart-fill provider and supply a key.
+          </li>
+        </ul>
+
+        <h2>Backups</h2>
+        <p>
+          If you export a vault backup, you receive an encrypted JSON file. Anyone with that file still
+          needs the correct passphrase to decrypt it. Keep exports private.
+        </p>
+
+        <h2>Children’s privacy</h2>
+        <p>The Extension is not directed at children under 13.</p>
+
+        <h2>Changes</h2>
+        <p>
+          We may update this policy when the Extension’s behavior changes. The “Last updated” date at
+          the top will change accordingly.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          For privacy questions about Secure Form Vault, contact the publisher email listed on the
+          Chrome Web Store listing for this Extension.
+        </p>
+      </article>
+    </main>
+  </body>
+</html>

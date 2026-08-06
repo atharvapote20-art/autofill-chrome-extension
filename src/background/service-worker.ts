@@ -13,6 +13,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onStartup.addListener(() => {
   vault.lockSession();
+  void broadcastLocked();
   void vault.loadSettings().then((s) => scheduleSessionSweep(s.sessionTimeoutMinutes));
 });
 
@@ -26,6 +27,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 async function broadcastLocked(): Promise<void> {
   try {
     await chrome.runtime.sendMessage({ kind: "sessionLocked" });
+  } catch {
+    /* no receivers */
+  }
+}
+
+async function broadcastUnlocked(): Promise<void> {
+  try {
+    await chrome.runtime.sendMessage({ kind: "sessionUnlocked" });
   } catch {
     /* no receivers */
   }
@@ -83,6 +92,9 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       scheduleSessionSweep(s.sessionTimeoutMinutes);
     }
     switch (req.kind) {
+      case "sessionGate": {
+        return { ok: true, unlocked: vault.isSessionOpen() };
+      }
       case "readSettings": {
         const settings = await vault.loadSettings();
         return { ok: true, settings };
@@ -108,6 +120,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
         const status = await vault.snapshotStatusAsync();
         const settings = await vault.loadSettings();
         scheduleSessionSweep(settings.sessionTimeoutMinutes);
+        void broadcastUnlocked();
         return { ok: true, status };
       }
       case "importVault": {
@@ -115,6 +128,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
         const settings = await vault.loadSettings();
         scheduleSessionSweep(settings.sessionTimeoutMinutes);
         const status = await vault.snapshotStatusAsync();
+        void broadcastUnlocked();
         return { ok: true, status };
       }
       case "unlock": {
@@ -128,11 +142,13 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
         const settings = await vault.loadSettings();
         scheduleSessionSweep(settings.sessionTimeoutMinutes);
         const status = await vault.snapshotStatusAsync();
+        void broadcastUnlocked();
         return { ok: true, status };
       }
       case "lock": {
         vault.lockSession();
         void chrome.alarms.clear(SESSION_ALARM);
+        void broadcastLocked();
         const status = await vault.snapshotStatusAsync();
         return { ok: true, status };
       }
@@ -242,98 +258,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
         return { ok: true, saved: true };
       }
       case "fillActiveTab": {
-        if (!vault.isSessionOpen()) return { ok: false, code: "LOCKED" };
-        const doc = vault.snapshotVaultClone();
-        const profile = doc.profiles.find((p) => p.id === req.profileId);
-        if (!profile) return { ok: false, code: "INTERNAL", detail: "Unknown profile" };
-        const settings = await vault.loadSettings();
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        const active = tabs[0];
-        if (!active?.id || !active.url?.match(/^https?:\/\//i)) {
-          return { ok: false, code: "BAD_TAB" };
-        }
-        const pack = buildProfilePack(profile.fields, doc.snippets);
-        let geminiKeys: (string | null)[] | undefined;
-        const geminiNotes: string[] = [];
-        const provider = settings.smartFillProvider;
-        if (active.id != null) {
-          if (provider === "gemini" && settings.geminiApiKey.trim()) {
-            try {
-              const listed = await sendTabMessage<{ haystacks?: string[] }>(active.id, {
-                kind: "listFillCandidates",
-                skipHidden: settings.skipHiddenFields,
-              });
-              const stacks = Array.isArray(listed?.haystacks) ? listed.haystacks : [];
-              if (stacks.length) {
-                const assignments = await fetchGeminiFieldKeys(
-                  settings.geminiApiKey.trim(),
-                  stacks,
-                  pack,
-                );
-                if (assignments.some((k) => k != null)) {
-                  geminiKeys = assignments;
-                  geminiNotes.push("Used Gemini for field matching.");
-                } else {
-                  geminiNotes.push("Gemini returned no field matches; using keyword matching.");
-                }
-              }
-            } catch (e) {
-              geminiNotes.push(
-                `Gemini: ${e instanceof Error ? e.message : String(e)} (keyword matching used).`,
-              );
-            }
-          } else if (provider === "groq" && settings.groqApiKey.trim()) {
-            try {
-              const listed = await sendTabMessage<{ haystacks?: string[] }>(active.id, {
-                kind: "listFillCandidates",
-                skipHidden: settings.skipHiddenFields,
-              });
-              const stacks = Array.isArray(listed?.haystacks) ? listed.haystacks : [];
-              if (stacks.length) {
-                const assignments = await fetchGroqFieldKeys(
-                  settings.groqApiKey.trim(),
-                  settings.groqModel || "llama-3.3-70b-versatile",
-                  stacks,
-                  pack,
-                );
-                if (assignments.some((k) => k != null)) {
-                  geminiKeys = assignments;
-                  geminiNotes.push("Used Groq for field matching.");
-                } else {
-                  geminiNotes.push("Groq returned no field matches; using keyword matching.");
-                }
-              }
-            } catch (e) {
-              geminiNotes.push(
-                `Groq: ${e instanceof Error ? e.message : String(e)} (keyword matching used).`,
-              );
-            }
-          }
-        }
-        let summary: { filled: number; skipped: number; notes: string[] };
-        try {
-          summary = await sendTabMessage(active.id, {
-            kind: "executeFill",
-            profilePack: pack,
-            highlight: settings.highlightFilledFields,
-            skipHidden: settings.skipHiddenFields,
-            maxFields: settings.maxFieldsPerFill,
-            geminiKeys: geminiKeys ?? null,
-          });
-        } catch (e) {
-          return {
-            ok: false,
-            code: "INJECT_FAILED",
-            detail:
-              e instanceof Error
-                ? e.message
-                : "Could not reach the page script. Reload the tab and try again.",
-          };
-        }
-        if (geminiNotes.length) {
-          summary.notes = [...geminiNotes, ...summary.notes];
-        }
-        return { ok: true, fillSummary: summary };
+        return await fillActiveTabWithProfile(req.profileId);
       }
       default:
         return { ok: false, code: "INTERNAL", detail: "Unknown request" };
@@ -346,6 +271,144 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     };
   }
 }
+
+async function resolveProfileIdForFill(preferredId?: string): Promise<string | null> {
+  const doc = vault.snapshotVaultClone();
+  if (preferredId && doc.profiles.some((p) => p.id === preferredId)) return preferredId;
+  let profileId = await vault.readLastUsedProfileId();
+  if (!profileId || !doc.profiles.some((p) => p.id === profileId)) {
+    profileId = doc.profiles.find((p) => p.isDefault)?.id ?? doc.profiles[0]?.id ?? null;
+  }
+  return profileId;
+}
+
+async function fillActiveTabWithProfile(profileId: string): Promise<WorkerResponse> {
+  if (!vault.isSessionOpen()) return { ok: false, code: "LOCKED" };
+  const doc = vault.snapshotVaultClone();
+  const profile = doc.profiles.find((p) => p.id === profileId);
+  if (!profile) return { ok: false, code: "INTERNAL", detail: "Unknown profile" };
+  await vault.writeLastUsedProfileId(profileId);
+  const settings = await vault.loadSettings();
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const active = tabs[0];
+  if (!active?.id || !active.url?.match(/^https?:\/\//i)) {
+    return { ok: false, code: "BAD_TAB" };
+  }
+  const pack = buildProfilePack(profile.fields, doc.snippets);
+  let geminiKeys: (string | null)[] | undefined;
+  const geminiNotes: string[] = [];
+  const provider = settings.smartFillProvider;
+  if (provider === "gemini" && settings.geminiApiKey.trim()) {
+    try {
+      const listed = await sendTabMessage<{ haystacks?: string[] }>(active.id, {
+        kind: "listFillCandidates",
+        skipHidden: settings.skipHiddenFields,
+      });
+      const stacks = Array.isArray(listed?.haystacks) ? listed.haystacks : [];
+      if (stacks.length) {
+        const assignments = await fetchGeminiFieldKeys(
+          settings.geminiApiKey.trim(),
+          stacks,
+          pack,
+        );
+        if (assignments.some((k) => k != null)) {
+          geminiKeys = assignments;
+          geminiNotes.push("Used Gemini for field matching.");
+        } else {
+          geminiNotes.push("Gemini returned no field matches; using keyword matching.");
+        }
+      }
+    } catch (e) {
+      geminiNotes.push(
+        `Gemini: ${e instanceof Error ? e.message : String(e)} (keyword matching used).`,
+      );
+    }
+  } else if (provider === "groq" && settings.groqApiKey.trim()) {
+    try {
+      const listed = await sendTabMessage<{ haystacks?: string[] }>(active.id, {
+        kind: "listFillCandidates",
+        skipHidden: settings.skipHiddenFields,
+      });
+      const stacks = Array.isArray(listed?.haystacks) ? listed.haystacks : [];
+      if (stacks.length) {
+        const assignments = await fetchGroqFieldKeys(
+          settings.groqApiKey.trim(),
+          settings.groqModel || "llama-3.3-70b-versatile",
+          stacks,
+          pack,
+        );
+        if (assignments.some((k) => k != null)) {
+          geminiKeys = assignments;
+          geminiNotes.push("Used Groq for field matching.");
+        } else {
+          geminiNotes.push("Groq returned no field matches; using keyword matching.");
+        }
+      }
+    } catch (e) {
+      geminiNotes.push(
+        `Groq: ${e instanceof Error ? e.message : String(e)} (keyword matching used).`,
+      );
+    }
+  }
+  let summary: { filled: number; skipped: number; notes: string[] };
+  try {
+    summary = await sendTabMessage(active.id, {
+      kind: "executeFill",
+      profilePack: pack,
+      highlight: settings.highlightFilledFields,
+      skipHidden: settings.skipHiddenFields,
+      maxFields: settings.maxFieldsPerFill,
+      geminiKeys: geminiKeys ?? null,
+    });
+  } catch (e) {
+    return {
+      ok: false,
+      code: "INJECT_FAILED",
+      detail:
+        e instanceof Error
+          ? e.message
+          : "Could not reach the page script. Reload the tab and try again.",
+    };
+  }
+  if (geminiNotes.length) {
+    summary.notes = [...geminiNotes, ...summary.notes];
+  }
+  return { ok: true, fillSummary: summary };
+}
+
+async function flashActionBadge(text: string, color: string): Promise<void> {
+  try {
+    await chrome.action.setBadgeBackgroundColor({ color });
+    await chrome.action.setBadgeText({ text });
+    setTimeout(() => {
+      void chrome.action.setBadgeText({ text: "" });
+    }, 2200);
+  } catch {
+    /* ignore */
+  }
+}
+
+chrome.commands.onCommand.addListener((command) => {
+  if (command !== "fill-active-tab") return;
+  void (async () => {
+    await vault.tryRestoreUnlockedSession();
+    if (vault.isSessionOpen()) {
+      const s = await vault.loadSettings();
+      scheduleSessionSweep(s.sessionTimeoutMinutes);
+    } else {
+      await flashActionBadge("!", "#b42318");
+      return;
+    }
+    const profileId = await resolveProfileIdForFill();
+    if (!profileId) {
+      await flashActionBadge("!", "#b42318");
+      return;
+    }
+    const res = await fillActiveTabWithProfile(profileId);
+    if (res.ok) await flashActionBadge("OK", "#0f7b4a");
+    else await flashActionBadge("!", "#b42318");
+  })();
+});
 
 function buildProfilePack(
   fields: Record<string, string>,

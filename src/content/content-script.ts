@@ -1,9 +1,11 @@
 import type { FillSummary } from "../shared/messages.js";
+import { defaultExtensionSettings } from "../shared/messages.js";
 import { dispatchToBackground } from "../shared/worker-gateway.js";
 import { expandKeySynonyms, inferProfileFieldKey, normalizeText, scoreHaystack } from "../shared/field-match.js";
 import { harvestAnyControl, harvestHaystack } from "./dom-harvest.js";
 import { applyControlValue } from "./field-value.js";
 import { configureFieldAssist, readExtensionSettingsFromStorage } from "./field-assist.js";
+import { showFillToast } from "./fill-toast.js";
 
 type FillCommand = {
   kind: "executeFill";
@@ -30,17 +32,29 @@ function markBooted(): void {
 }
 
 function wireListener(): void {
-  chrome.runtime.onMessage.addListener((msg: TabMessage, _sender, sendResponse) => {
-    if (msg?.kind === "listFillCandidates") {
-      void Promise.resolve(listFillCandidates(msg.skipHidden))
+  chrome.runtime.onMessage.addListener((msg: unknown, _sender, sendResponse) => {
+    if (msg && typeof msg === "object" && "kind" in msg) {
+      const k = (msg as { kind: string }).kind;
+      if (k === "sessionLocked") {
+        deactivatePageFeatures();
+        return false;
+      }
+      if (k === "sessionUnlocked") {
+        void activatePageFeaturesFromSettings();
+        return false;
+      }
+    }
+    const m = msg as TabMessage;
+    if (m?.kind === "listFillCandidates") {
+      void Promise.resolve(listFillCandidates(m.skipHidden))
         .then(sendResponse)
         .catch((err) => {
           sendResponse({ haystacks: [] as string[], error: String(err) });
         });
       return true;
     }
-    if (msg?.kind !== "executeFill") return false;
-    void Promise.resolve(runFillPass(msg))
+    if (m?.kind !== "executeFill") return false;
+    void Promise.resolve(runFillPass(m))
       .then(sendResponse)
       .catch((err) => {
         sendResponse({
@@ -56,23 +70,52 @@ function wireListener(): void {
 if (!alreadyBooted()) {
   markBooted();
   wireListener();
-  void initExtensionBehavior();
+  void syncPageFeaturesWithVault();
+}
+
+let settingsListener: Parameters<typeof chrome.storage.onChanged.addListener>[0] | null = null;
+
+function stopListeningSettings(): void {
+  if (!settingsListener) return;
+  chrome.storage.onChanged.removeListener(settingsListener);
+  settingsListener = null;
+}
+
+function deactivatePageFeatures(): void {
+  stopListeningSettings();
+  setLearnListeners(false);
+  configureFieldAssist({
+    ...defaultExtensionSettings(),
+    fieldAssistEnabled: false,
+    promptSaveOnBlur: false,
+  });
+}
+
+async function activatePageFeaturesFromSettings(): Promise<void> {
+  deactivatePageFeatures();
+  const s = await readExtensionSettingsFromStorage();
+  setLearnListeners(s.learnFromSubmittedForms);
+  configureFieldAssist(s);
+  if (settingsListener) return;
+  settingsListener = (changes, area) => {
+    if (area !== "local" || !changes[SETTINGS_KEY]) return;
+    void (async () => {
+      const next = await readExtensionSettingsFromStorage();
+      setLearnListeners(next.learnFromSubmittedForms);
+      configureFieldAssist(next);
+    })();
+  };
+  chrome.storage.onChanged.addListener(settingsListener);
+}
+
+async function syncPageFeaturesWithVault(): Promise<void> {
+  const res = await dispatchToBackground({ kind: "sessionGate" });
+  const open = res.ok && "unlocked" in res && res.unlocked === true;
+  if (open) await activatePageFeaturesFromSettings();
+  else deactivatePageFeatures();
 }
 
 let learnAbort: AbortController | null = null;
-
-async function initExtensionBehavior(): Promise<void> {
-  const apply = async (): Promise<void> => {
-    const s = await readExtensionSettingsFromStorage();
-    setLearnListeners(s.learnFromSubmittedForms);
-    configureFieldAssist(s);
-  };
-  await apply();
-  chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !changes[SETTINGS_KEY]) return;
-    void apply();
-  });
-}
 
 function setLearnListeners(enabled: boolean): void {
   learnAbort?.abort();
@@ -160,7 +203,9 @@ function runFillPass(cmd: FillCommand): FillSummary {
     }
   }
   const skipped = Math.max(0, targets.length - filled);
-  return { filled, skipped, notes };
+  const summary = { filled, skipped, notes };
+  showFillToast(filled, skipped);
+  return summary;
 }
 
 function runGeminiFillPass(
@@ -188,7 +233,9 @@ function runGeminiFillPass(
     }
   }
   const skipped = Math.max(0, targets.length - filled);
-  return { filled, skipped, notes };
+  const summary = { filled, skipped, notes };
+  showFillToast(filled, skipped);
+  return summary;
 }
 
 type Control = HTMLInputElement | HTMLTextAreaElement;

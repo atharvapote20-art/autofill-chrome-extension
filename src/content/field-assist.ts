@@ -1,5 +1,6 @@
 import type { AssistPayload, ExtensionSettings } from "../shared/messages.js";
 import { defaultExtensionSettings } from "../shared/messages.js";
+import { humanizeFieldKey } from "../shared/field-labels.js";
 import { dispatchToBackground } from "../shared/worker-gateway.js";
 import type { HarvestableInput } from "./dom-harvest.js";
 import { harvestHaystack } from "./dom-harvest.js";
@@ -9,22 +10,6 @@ const SETTINGS_KEY = "sfvUiSettings";
 const ROOT_ID = "__sfv_field_assist_root";
 const STYLE_ID = "__sfv_field_assist_styles";
 
-const KEY_LABELS: Record<string, string> = {
-  fullName: "Full name",
-  firstName: "First name",
-  lastName: "Last name",
-  email: "Email",
-  phone: "Phone",
-  addressLine1: "Address line 1",
-  addressLine2: "Address line 2",
-  city: "City",
-  region: "State / region",
-  postalCode: "Postal code",
-  country: "Country",
-  organization: "Organization",
-  website: "Website",
-};
-
 let assistEnabled = false;
 let promptSaveEnabled = false;
 let teardown: (() => void) | null = null;
@@ -33,10 +18,6 @@ let root: HTMLDivElement | null = null;
 let suggestTimer: ReturnType<typeof setTimeout> | null = null;
 let blurTimer: ReturnType<typeof setTimeout> | null = null;
 let reposition: (() => void) | null = null;
-
-function humanizeKey(key: string): string {
-  return KEY_LABELS[key] ?? key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()).trim();
-}
 
 function injectStyles(): void {
   if (document.getElementById(STYLE_ID)) return;
@@ -205,7 +186,7 @@ function renderSuggestions(target: HarvestableInput, assist: AssistPayload): voi
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "sfv-fa-btn";
-    btn.textContent = `Use “${truncate(s.value, 28)}” (${humanizeKey(s.key)})`;
+    btn.textContent = `Use “${truncate(s.value, 28)}” (${humanizeFieldKey(s.key)})`;
     btn.addEventListener("mousedown", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -236,7 +217,7 @@ function renderSavePrompt(target: HarvestableInput, fieldKey: string, value: str
   title.textContent = "Save to profile?";
   const muted = document.createElement("div");
   muted.className = "sfv-fa-muted";
-  muted.textContent = `Store this as ${humanizeKey(fieldKey)} on your active profile.`;
+  muted.textContent = `Store this as ${humanizeFieldKey(fieldKey)} on your active profile.`;
   const row = document.createElement("div");
   row.className = "sfv-fa-row";
   const yes = document.createElement("button");
@@ -376,7 +357,7 @@ function unmount(): void {
   teardown?.();
 }
 
-/** Sync assist behavior from extension settings (vault may still be locked; worker returns empty assist). */
+/** Sync assist behavior from extension settings (call only while vault is unlocked). */
 export function configureFieldAssist(settings: ExtensionSettings): void {
   applyFlags(settings);
   const want = settings.fieldAssistEnabled || settings.promptSaveOnBlur;

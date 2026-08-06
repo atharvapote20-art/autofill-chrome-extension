@@ -88,6 +88,22 @@
           <section id="tab-prefs" class="sfv-panel tabpanel">
             <h2 class="sfv-panel__title">Preferences</h2>
             <p class="sfv-panel__lead">Tune how filling behaves on websites.</p>
+
+            <div class="sfv-shortcut">
+              <h3 class="sfv-shortcut__title">Keyboard shortcut</h3>
+              <p class="sfv-muted">
+                Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>
+                (<kbd>Option</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> on Mac) on any http(s) tab to run
+                <strong>Fill this tab</strong> with your last-used profile. The vault must be unlocked first
+                (toolbar popup). If the keys do nothing, Chrome may not have assigned them yet — open the
+                shortcuts page below, find <em>Secure Form Vault</em>, and set or enable
+                “Fill this tab with the last-used profile”.
+              </p>
+              <button id="openShortcuts" type="button" class="sfv-obtn sfv-obtn--ghost">
+                Open Chrome shortcut settings
+              </button>
+            </div>
+
             <label class="sfv-check">
               <input id="prefHighlight" type="checkbox" />
               <span>Highlight fields after fill</span>

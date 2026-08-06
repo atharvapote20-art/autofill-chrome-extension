@@ -406,6 +406,39 @@ body {
   max-width: 62ch;
 }
 
+.sfv-shortcut {
+  margin: 0 0 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--sfv-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sfv-surface-solid) 88%, transparent);
+  max-width: 62ch;
+}
+
+.sfv-shortcut__title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.sfv-shortcut .sfv-muted {
+  margin-bottom: 12px;
+}
+
+.sfv-shortcut kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--sfv-border);
+  border-radius: 6px;
+  background: var(--sfv-surface-solid);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sfv-text);
+  line-height: 1.4;
+}
+
 @media (max-width: 880px) {
   .sfv-shell {
     flex-direction: column;

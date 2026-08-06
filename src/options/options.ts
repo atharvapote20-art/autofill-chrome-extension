@@ -8,6 +8,7 @@ import type {
   WorkerResponse,
 } from "../shared/messages.js";
 import { PROFILE_FIELD_PRESETS, defaultExtensionSettings } from "../shared/messages.js";
+import { humanizeFieldKey } from "../shared/field-labels.js";
 import { dispatchToBackground } from "../shared/worker-gateway.js";
 import { STORAGE_LAST_PROFILE_ID } from "../shared/storage-keys.js";
 
@@ -138,7 +139,7 @@ async function boot(): Promise<void> {
   }
 }
 
-vaultunlock.addEventListener("click", async () => {
+async function unlockFromOptions(): Promise<void> {
   clearUnlockError();
   const res = await dispatchToBackground({ kind: "unlock", passphrase: vaultpass.value });
   if (!res.ok) {
@@ -147,6 +148,20 @@ vaultunlock.addEventListener("click", async () => {
   }
   vaultpass.value = "";
   await openEditor();
+}
+
+vaultunlock.addEventListener("click", () => {
+  void unlockFromOptions();
+});
+
+vaultpass.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  ev.preventDefault();
+  void unlockFromOptions();
+});
+
+document.getElementById("openShortcuts")?.addEventListener("click", () => {
+  void chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
 });
 
 async function openEditor(): Promise<void> {
@@ -200,7 +215,7 @@ function hydratePrefs(s: ExtensionSettings): void {
 
 prefSmartFill.addEventListener("change", syncSmartFillRows);
 
-savePrefs.addEventListener("click", async () => {
+async function persistPreferences(): Promise<void> {
   const read = await dispatchToBackground({ kind: "readSettings" });
   const base =
     read.ok && "settings" in read
@@ -223,7 +238,32 @@ savePrefs.addEventListener("click", async () => {
   const res = await dispatchToBackground({ kind: "writeSettings", settings: next });
   if (!res.ok) flashFail(prefMsg, res, "Save failed");
   else flash(prefMsg, "Preferences saved");
+}
+
+savePrefs.addEventListener("click", () => {
+  void persistPreferences();
 });
+
+function onEnter(el: HTMLElement, action: () => void): void {
+  el.addEventListener("keydown", (ev) => {
+    if (!(ev instanceof KeyboardEvent) || ev.key !== "Enter") return;
+    ev.preventDefault();
+    action();
+  });
+}
+
+for (const el of [
+  prefTimeout,
+  prefMax,
+  prefGeminiKey,
+  prefGroqKey,
+  prefGroqModel,
+  prefSmartFill,
+]) {
+  onEnter(el, () => {
+    void persistPreferences();
+  });
+}
 
 tabs.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -263,7 +303,7 @@ function selectProfile(id: string): void {
   for (const key of keys) {
     const lab = document.createElement("label");
     lab.className = "sfv-fields__lab";
-    lab.textContent = key;
+    lab.textContent = humanizeFieldKey(key);
     const inp = document.createElement("input");
     inp.className = "sfv-oinput";
     inp.type = "text";
@@ -307,7 +347,7 @@ addCustom.addEventListener("click", () => {
   selectProfile(p.id);
 });
 
-saveProfile.addEventListener("click", async () => {
+async function persistProfile(): Promise<void> {
   const p = currentProfile();
   if (!p) return;
   p.name = profileName.value.trim() || p.name;
@@ -333,7 +373,34 @@ saveProfile.addEventListener("click", async () => {
     renderProfileSelect();
     selectProfile(p.id);
   }
+}
+
+saveProfile.addEventListener("click", () => {
+  void persistProfile();
 });
+
+profileName.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  ev.preventDefault();
+  void persistProfile();
+});
+
+fieldGrid.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  const t = ev.target;
+  if (!(t instanceof HTMLInputElement) || !t.dataset.fieldKey) return;
+  ev.preventDefault();
+  void persistProfile();
+});
+
+for (const el of [customKey, customVal]) {
+  el.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    if (customKey.value.trim()) addCustom.click();
+    else void persistProfile();
+  });
+}
 
 delProfile.addEventListener("click", async () => {
   const p = currentProfile();
@@ -381,7 +448,7 @@ function clearSnippetForm(): void {
 
 newSnippet.addEventListener("click", clearSnippetForm);
 
-saveSnippet.addEventListener("click", async () => {
+async function persistSnippet(): Promise<void> {
   if (!localCopy) return;
   const sn: Snippet = {
     id: activeSnippetId ?? crypto.randomUUID(),
@@ -401,7 +468,19 @@ saveSnippet.addEventListener("click", async () => {
     loadSnippet(sn.id);
     flash(snipMsg, "Snippet saved");
   }
+}
+
+saveSnippet.addEventListener("click", () => {
+  void persistSnippet();
 });
+
+for (const el of [snipTitle, snipTags]) {
+  el.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    void persistSnippet();
+  });
+}
 
 exportBtn.addEventListener("click", async () => {
   const res = await dispatchToBackground({ kind: "peekEncryptedVault" });
@@ -450,6 +529,12 @@ importBtn.addEventListener("click", async () => {
     importPass.value = "";
     await openEditor();
   }
+});
+
+importPass.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  ev.preventDefault();
+  importBtn.click();
 });
 
 function clamp(n: number, lo: number, hi: number): number {

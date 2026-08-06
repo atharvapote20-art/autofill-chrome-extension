@@ -30,6 +30,15 @@
     }
   },
   "options_page": "src/options/options.html",
+  "commands": {
+    "fill-active-tab": {
+      "suggested_key": {
+        "default": "Alt+Shift+F",
+        "mac": "Alt+Shift+F"
+      },
+      "description": "Fill this tab with the last-used profile"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
