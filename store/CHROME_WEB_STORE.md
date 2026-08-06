@@ -15,10 +15,16 @@ Privacy policy file to host (needs a public HTTPS URL):
 /Users/atharvpote/data/Project/autofill/store/privacy.html
 ```
 
-Public URL (after GitHub Pages is enabled on `main`):
+Public privacy policy URLs:
 
 ```text
 https://atharvapote20-art.github.io/autofill-chrome-extension/store/privacy.html
+```
+
+Fallback (works immediately from GitHub raw via jsDelivr):
+
+```text
+https://cdn.jsdelivr.net/gh/atharvapote20-art/autofill-chrome-extension@main/store/privacy.html
 ```
 
 ---
